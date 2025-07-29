@@ -1,0 +1,39 @@
+# Local Docker Setup - Completely Free
+# Run your image generator alongside n8n
+
+version: '3.8'
+
+services:
+  # Your existing n8n service (add this to your existing docker-compose if you have one)
+  # n8n:
+  #   image: n8nio/n8n
+  #   ... your existing n8n config
+
+  # Your image generator service
+  image-generator:
+    build: .
+    ports:
+      - "9000:9000"  # Access at http://localhost:9000
+    environment:
+      - PORT=9000
+      - NODE_ENV=production
+    restart: unless-stopped
+    volumes:
+      - ./public:/app/public:ro  # Optional: for easier template updates
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:9000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Optional: Add a reverse proxy if you want both services on port 80
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+    depends_on:
+      - image-generator
+    restart: unless-stopped

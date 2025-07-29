@@ -56,7 +56,7 @@ function wrapText(text, maxWidth = 40) {
   return lines;
 }
 
-// Create SVG with embedded text (using Arial/sans-serif for compatibility)
+// Create SVG with embedded text (using DejaVu Sans and other fallback fonts for Docker compatibility)
 function createTextSVG(text, options = {}) {
   const {
     fontSize = 48,
@@ -97,7 +97,7 @@ function createTextSVG(text, options = {}) {
 
   const textElements = lines.map((line, index) => {
     const y = startY + (index * lineHeight);
-    return `<text x="${width / 2}" y="${y}" text-anchor="${textAnchor}" fill="${color}" font-size="${fontSize}" font-family="Arial, sans-serif" font-weight="bold">${escapeXml(line)}</text>`;
+    return `<text x="${width / 2}" y="${y}" text-anchor="${textAnchor}" fill="${color}" font-size="${fontSize}" font-family="DejaVu Sans, Liberation Sans, Noto Sans, sans-serif" font-weight="bold">${escapeXml(line)}</text>`;
   }).join('\n    ');
 
   return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
