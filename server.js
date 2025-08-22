@@ -64,7 +64,8 @@ function createTextSVG(text, options = {}) {
     position = 'middle',
     align = 'center',
     width = 800,
-    height = 600
+    height = 600,
+    fontFamily = 'DejaVu Sans, Liberation Sans, Noto Sans, sans-serif'
   } = options;
 
   const lines = wrapText(text, Math.floor(width / (fontSize * 0.6)));
@@ -97,7 +98,7 @@ function createTextSVG(text, options = {}) {
 
   const textElements = lines.map((line, index) => {
     const y = startY + (index * lineHeight);
-    return `<text x="${width / 2}" y="${y}" text-anchor="${textAnchor}" fill="${color}" font-size="${fontSize}" font-family="DejaVu Sans, Liberation Sans, Noto Sans, sans-serif" font-weight="bold">${escapeXml(line)}</text>`;
+  return `<text x="${width / 2}" y="${y}" text-anchor="${textAnchor}" fill="${color}" font-size="${fontSize}" font-family="${fontFamily}" font-weight="bold">${escapeXml(line)}</text>`;
   }).join('\n    ');
 
   return `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg">
@@ -146,15 +147,24 @@ app.post('/generate', async (req, res) => {
       fontSize = 48, 
       color = '#FFFFFF', 
       position = 'middle', 
-      align = 'center' 
+      align = 'center',
+      template = 'template1.png',
+      fontFamily = 'DejaVu Sans, Liberation Sans, Noto Sans, sans-serif'
     } = req.body;
 
     if (!text || text.trim() === '') {
       return res.status(400).json({ error: 'Text is required' });
     }
 
-    if (!templateBuffer) {
-      return res.status(404).json({ error: 'Template not initialized' });
+    // Validate template selection
+    const allowedTemplates = ['template1.png', 'template2.png'];
+    const selectedTemplate = allowedTemplates.includes(template) ? template : 'template1.png';
+    const templatePath = path.join(__dirname, 'public', selectedTemplate);
+    let templateBuffer;
+    if (fs.existsSync(templatePath)) {
+      templateBuffer = await fs.promises.readFile(templatePath);
+    } else {
+      return res.status(404).json({ error: 'Template not found' });
     }
 
     const templateMetadata = await sharp(templateBuffer).metadata();
@@ -166,7 +176,8 @@ app.post('/generate', async (req, res) => {
       position,
       align,
       width,
-      height
+      height,
+      fontFamily
     });
 
     const outputBuffer = await sharp(templateBuffer)

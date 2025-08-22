@@ -1,19 +1,26 @@
-# Use the official Node.js runtime as the base image
-FROM node:18-alpine
+# Use the official Node.js runtime as the base image (Debian for full font support)
+FROM node:18-bullseye
+
+# Enable contrib repo for Microsoft fonts
+RUN apt-get update && apt-get install -y --no-install-recommends wget gnupg && \
+    echo "deb http://deb.debian.org/debian/ bullseye contrib" >> /etc/apt/sources.list
 
 # Install necessary packages for Sharp and font rendering
-RUN apk add --no-cache \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
     fontconfig \
-    font-noto \
-    font-noto-cjk \
-    font-noto-emoji \
-    ttf-dejavu \
-    ttf-liberation \
-    ttf-opensans \
-    cairo \
-    pango \
-    glib \
-    && fc-cache -fv
+    fonts-dejavu \
+    fonts-liberation \
+    fonts-noto \
+    fonts-noto-cjk \
+    fonts-noto-color-emoji \
+    fonts-crosextra-carlito \
+    fonts-crosextra-caladea \
+    ttf-mscorefonts-installer \
+    libcairo2 \
+    libpango-1.0-0 \
+    libglib2.0-0 \
+    && fc-cache -fv && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory in the container
 WORKDIR /app
@@ -27,9 +34,10 @@ RUN npm ci --only=production
 # Copy the rest of the application code
 COPY . .
 
-# Create a non-root user to run the application
-RUN addgroup -g 1001 -S nodejs
-RUN adduser -S nextjs -u 1001
+
+# Create a non-root user and group to run the application (Debian/Ubuntu syntax)
+RUN groupadd -g 1001 nodejs && \
+    useradd -m -u 1001 -g nodejs nextjs
 
 # Change ownership of the app directory to the nodejs user
 RUN chown -R nextjs:nodejs /app
